@@ -8,6 +8,7 @@ const port = 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static('.')); // Serve static files from the current directory
 
 app.post('/lint', (req, res) => {
   const { code, parameter } = req.body;
