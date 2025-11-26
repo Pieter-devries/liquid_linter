@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liquid Linter for LookML</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <div id="app">
+    <header>
+      <h1>Liquid Linter</h1>
+      <p>Paste your Liquid code below to check for syntax errors.</p>
+      <div class="parameter-selector">
+        <label for="lookml-parameter">LookML Parameter:</label>
+        <select id="lookml-parameter">
+          <option value="html">html</option>
+          <option value="sql">sql / sql_on / sql_table_name</option>
+          <option value="link">link</option>
+          <option value="label">label / view_label / group_label</option>
+          <option value="action">action</option>
+          <option value="filters">filters</option>
+          <option value="default_value">default_value</option>
+          <option value="description">description</option>
+        </select>
+      </div>
+    </header>
+    <main>
+      <div class="editor-container">
+        <textarea id="liquid-input" placeholder="Paste Liquid code here..."></textarea>
+        <div id="line-numbers"></div>
+      </div>
+      <div id="output-container">
+        <div id="status-bar">
+          <span id="status-icon"></span>
+          <span id="status-message">Ready</span>
+        </div>
+        <div id="error-list"></div>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="/main.js"></script>
+</body>
+
+</html>

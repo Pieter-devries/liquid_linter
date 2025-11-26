@@ -1,0 +1,154 @@
+:root {
+  --bg-color: #1e1e1e;
+  --text-color: #d4d4d4;
+  --primary-color: #007acc;
+  --error-color: #f44336;
+  --success-color: #4caf50;
+  --border-color: #333;
+  --header-bg: #252526;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+header {
+  background-color: var(--header-bg);
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #fff;
+}
+
+header p {
+  margin: 0.5rem 0 0;
+  opacity: 0.8;
+}
+
+.parameter-selector {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.parameter-selector label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.parameter-selector select {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid var(--border-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.editor-container {
+  flex: 1;
+  position: relative;
+  border-right: 1px solid var(--border-color);
+}
+
+#liquid-input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: inherit;
+  border: none;
+  padding: 1rem;
+  font-family: 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  box-sizing: border-box;
+}
+
+#output-container {
+  flex: 0 0 300px;
+  background-color: #252526;
+  display: flex;
+  flex-direction: column;
+}
+
+#status-bar {
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: bold;
+}
+
+#status-icon {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #888;
+}
+
+#status-icon.success {
+  background-color: var(--success-color);
+}
+
+#status-icon.error {
+  background-color: var(--error-color);
+}
+
+#error-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.error-item {
+  background-color: rgba(244, 67, 54, 0.1);
+  border-left: 3px solid var(--error-color);
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.error-item.warning {
+  background-color: rgba(255, 152, 0, 0.1);
+  border-left-color: #ff9800;
+}
+
+.error-line {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.error-message {
+  color: #ffcdd2;
+}
+
+.error-item.warning .error-message {
+  color: #ffe0b2;
+}
