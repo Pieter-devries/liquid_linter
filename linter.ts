@@ -400,13 +400,16 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
 
       if (isPropertyAccess) {
         const allowedProperties = ['_value', '_rendered_value', '_linked_value', '_label', '_series', '_group_label', '_link', '_parameter_value', '_name', '_dashboard_url', '_query_timezone', '_is_selected', '_in_query', '_is_filtered'];
+        const varStart = validMatch.index + 2 + varMatch.index + varMatch[0].indexOf(varName);
+        const varEnd = varStart + varName.length;
+
         if (varName.startsWith('_') && !allowedProperties.includes(varName)) {
           errors.push({
             type: 'Looker-specific',
             message: `Property \`${varName}\` is not a valid field property.`,
             line: getLineNumber(code, validMatch.index), // Line number of the tag start
             url: 'https://cloud.google.com/looker/docs/liquid-variable-reference#accessing_variables_from_other_fields',
-            range: [validMatch.index, validMatch.index + validMatch[0].length]
+            range: [varStart, varEnd]
           });
         } else if ((varName === '_parameter_value' || varName === '_is_selected' || varName === '_in_query' || varName === '_is_filtered' || (varName === '_dashboard_url' && parameter === 'action')) && !supported.includes(varName)) {
           errors.push({
@@ -414,7 +417,7 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
             message: `Variable \`${varName}\` is not supported in the \`${parameter}\` parameter.`,
             line: getLineNumber(code, validMatch.index),
             url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
-            range: [validMatch.index, validMatch.index + validMatch[0].length]
+            range: [varStart, varEnd]
           });
         } else if (parameter === 'default_value' || parameter === 'filters') {
           // In default_value and filters, field references are not allowed.
@@ -426,7 +429,7 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
               message: `Field references are not supported in the \`${parameter}\` parameter.`,
               line: getLineNumber(code, validMatch.index),
               url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
-              range: [validMatch.index, validMatch.index + validMatch[0].length]
+              range: [varStart, varEnd]
             });
           }
         } else if (varName.startsWith('_')) {
@@ -435,11 +438,14 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
             message: `Property \`${varName}\` is acceptable to use in the \`${parameter}\` parameter.`,
             line: getLineNumber(code, validMatch.index),
             url: 'https://cloud.google.com/looker/docs/liquid-variable-reference#accessing_variables_from_other_fields',
-            range: [validMatch.index, validMatch.index + validMatch[0].length]
+            range: [varStart, varEnd]
           });
         }
       } else {
         // Check for general variable support
+        const varStart = validMatch.index + 2 + varMatch.index + varMatch[0].indexOf(varName);
+        const varEnd = varStart + varName.length;
+
         if (varName.startsWith('_') && !supported.includes(varName)) {
           let suggestion = '';
           if (varName === '_isfiltered') suggestion = 'Did you mean `_is_filtered`?';
@@ -453,7 +459,7 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
             message: `Variable \`${varName}\` is not supported in the \`${parameter}\` parameter. ${suggestion}`,
             line: getLineNumber(code, validMatch.index), // Line number of the tag start
             url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
-            range: [validMatch.index, validMatch.index + validMatch[0].length]
+            range: [varStart, varEnd]
           });
         } else if (varName.startsWith('_') && supported.includes(varName)) {
           errors.push({
@@ -461,7 +467,7 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
             message: `Variable \`${varName}\` is acceptable to use in the \`${parameter}\` parameter.`,
             line: getLineNumber(code, validMatch.index),
             url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
-            range: [validMatch.index, validMatch.index + validMatch[0].length]
+            range: [varStart, varEnd]
           });
         } else if (!varName.startsWith('_') && !supported.includes(varName)) {
           // For standard variables like 'value', 'link', etc.
@@ -470,7 +476,7 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
             message: `Variable \`${varName}\` is not supported in the \`${parameter}\` parameter.`,
             line: getLineNumber(code, validMatch.index),
             url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
-            range: [validMatch.index, validMatch.index + validMatch[0].length]
+            range: [varStart, varEnd]
           });
         } else if (!varName.startsWith('_') && supported.includes(varName)) {
           errors.push({
@@ -478,7 +484,7 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
             message: `Variable \`${varName}\` is acceptable to use in the \`${parameter}\` parameter.`,
             line: getLineNumber(code, validMatch.index),
             url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
-            range: [validMatch.index, validMatch.index + validMatch[0].length]
+            range: [varStart, varEnd]
           });
         }
       }
