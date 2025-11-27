@@ -25,7 +25,7 @@ engine.registerTag('date_end', {
 });
 
 const supportMap: Record<string, string[]> = {
-  'html': ['value', 'row', 'rendered_value', 'filterable_value', 'link', 'linked_value', '_filters', '_user_attributes', '_localization', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_parameter_value', 'parameter'],
+  'html': ['value', 'row', 'rendered_value', 'filterable_value', 'link', 'linked_value', '_filters', '_user_attributes', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_parameter_value', 'parameter'],
   'sql': ['link', 'date_start', 'date_end', 'condition', '_parameter_value', '_user_attributes', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', 'parameter'],
   'link': ['value', 'row', 'rendered_value', 'filterable_value', 'link', 'linked_value', '_filters', '_user_attributes', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', '_parameter_value', 'parameter'],
   'label': ['row', '_filters', '_user_attributes', '_model', '_view', '_explore', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', '_parameter_value', 'parameter'],
@@ -33,7 +33,7 @@ const supportMap: Record<string, string[]> = {
   'filters': ['_user_attributes', '_localization'],
   'default_value': ['_user_attributes', '_localization'],
   'description': ['_filters', '_user_attributes', '_model', '_view', '_explore', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', '_parameter_value', 'parameter'],
-  'sql_preamble': ['_user_attributes', '_localization', '_model', '_view', '_explore', '_field', '_query']
+  'sql_preamble': ['_user_attributes', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', 'parameter']
 };
 
 const allowedFilters = [
@@ -294,9 +294,9 @@ function runCustomChecks(code: string, parameter: string): LintError[] {
     '_is_selected', '_is_filtered', '_in_query', '_filters', '_user_attributes',
     '_localization', '_model', '_view', '_explore', '_field', '_query'
   ];
-  const variableRegex = /({{|{%)[^%}]*?(\.\s*|\s+)(_[a-zA-Z0-9_]+)/g;
+  const variableRegex = /(?<!\.)\b(_[a-zA-Z0-9_]+)\b/g;
   while ((match = variableRegex.exec(code)) !== null) {
-    const varName = match[3];
+    const varName = match[1];
     if (varName.startsWith('_') && !allowedVariables.includes(varName)) {
       let suggestion = '';
       if (varName === '_isfiltered') suggestion = 'Did you mean `_is_filtered`?';
@@ -366,14 +366,19 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
       const tagMatch = content.trim().match(/^(\w+)/);
       if (tagMatch) {
         const tagName = tagMatch[1];
-        if ((tagName === 'date_start' || tagName === 'date_end' || tagName === 'condition' || tagName === 'parameter') && !supported.includes(tagName)) {
-          errors.push({
-            type: 'Looker-specific',
-            message: `Tag \`${tagName}\` is not supported in the \`${parameter}\` parameter.`,
-            line: getLineNumber(code, validMatch.index),
-            url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
-            range: [validMatch.index, validMatch.index + validMatch[0].length]
-          });
+        if ((tagName === 'date_start' || tagName === 'date_end' || tagName === 'condition' || tagName === 'endcondition' || tagName === 'parameter') && !supported.includes(tagName)) {
+          // Special case for endcondition, it's allowed if condition is allowed
+          if (tagName === 'endcondition' && supported.includes('condition')) {
+            // Allowed
+          } else {
+            errors.push({
+              type: 'Looker-specific',
+              message: `Tag \`${tagName}\` is not supported in the \`${parameter}\` parameter.`,
+              line: getLineNumber(code, validMatch.index),
+              url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
+              range: [validMatch.index, validMatch.index + validMatch[0].length]
+            });
+          }
         }
       }
     }

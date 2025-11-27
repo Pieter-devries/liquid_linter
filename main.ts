@@ -68,7 +68,11 @@ function handleLint() {
   if (result.status === 'ready') {
     setReady();
   } else if (result.status === 'success') {
-    setSuccess(result.errors);
+    if (code.includes('{{') || code.includes('{%')) {
+      setSuccess(result.errors);
+    } else {
+      setReady(); // Or a new state "No Liquid detected"
+    }
   } else if (result.status === 'warning') {
     setWarning(result.errors);
   } else if (result.status === 'error') {
