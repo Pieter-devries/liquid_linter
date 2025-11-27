@@ -229,8 +229,9 @@ function updateHighlights(code: string, parameter: string) {
       html += escapeHtml(code.substring(currentPos, start));
       const blockText = code.substring(start, end);
       const errorsInBlock = sortedErrors.filter(e => e.range![0] >= start && e.range![1] <= end);
+      const hasRealErrors = errorsInBlock.some(e => e.type !== 'Success');
 
-      if (errorsInBlock.length > 0) {
+      if (hasRealErrors) {
         // Handle block with errors
         let blockPos = start;
         for (const err of errorsInBlock) {
