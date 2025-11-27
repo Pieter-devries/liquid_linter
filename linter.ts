@@ -424,6 +424,14 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
               range: [validMatch.index, validMatch.index + validMatch[0].length]
             });
           }
+        } else if (varName.startsWith('_')) {
+          errors.push({
+            type: 'Success',
+            message: `Property \`${varName}\` is acceptable to use in the \`${parameter}\` parameter.`,
+            line: getLineNumber(code, validMatch.index),
+            url: 'https://cloud.google.com/looker/docs/liquid-variable-reference#accessing_variables_from_other_fields',
+            range: [validMatch.index, validMatch.index + validMatch[0].length]
+          });
         }
       } else {
         // Check for general variable support
