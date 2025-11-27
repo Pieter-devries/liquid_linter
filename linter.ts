@@ -408,7 +408,7 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
             url: 'https://cloud.google.com/looker/docs/liquid-variable-reference#accessing_variables_from_other_fields',
             range: [validMatch.index, validMatch.index + validMatch[0].length]
           });
-        } else if ((varName === '_parameter_value' || varName === '_is_selected' || varName === '_in_query' || varName === '_is_filtered') && !supported.includes(varName)) {
+        } else if ((varName === '_parameter_value' || varName === '_is_selected' || varName === '_in_query' || varName === '_is_filtered' || (varName === '_dashboard_url' && parameter === 'action')) && !supported.includes(varName)) {
           errors.push({
             type: 'Looker-specific',
             message: `Variable \`${varName}\` is not supported in the \`${parameter}\` parameter.`,

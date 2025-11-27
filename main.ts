@@ -61,6 +61,24 @@ function handleLint() {
     if (parameterSelect.value === 'auto') {
       parameter = 'auto'; // linter.ts handles 'auto' by using detectedParams
     }
+  } else if (!manualParameterSelection && detectedParameters.length === 0 && parameterSelect.value === 'auto') {
+    // No parameters detected, default to 'action' and disable auto-detect option if desired, 
+    // but for now just fallback to 'action' for linting
+    parameter = 'action';
+    // Optionally update dropdown to 'action' but keep it enabled? 
+    // User wants Auto-detect greyed out.
+    const autoOption = parameterSelect.querySelector('option[value="auto"]') as HTMLOptionElement;
+    if (autoOption) {
+      autoOption.disabled = true;
+      if (parameterSelect.value === 'auto') {
+        parameterSelect.value = 'action';
+        parameter = 'action';
+      }
+    }
+  } else if (detectedParameters.length > 0) {
+    // Re-enable auto-detect if parameters are found
+    const autoOption = parameterSelect.querySelector('option[value="auto"]') as HTMLOptionElement;
+    if (autoOption) autoOption.disabled = false;
   }
 
   const result = lintLiquid(code, parameter);
