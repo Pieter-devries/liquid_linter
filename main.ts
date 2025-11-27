@@ -240,7 +240,7 @@ function updateHighlights(code: string, parameter: string) {
         for (const err of errorsInBlock) {
           const [errStart, errEnd] = err.range!;
           if (errStart > blockPos) {
-            html += `<span class="highlight-valid">${escapeHtml(code.substring(blockPos, errStart))}</span>`;
+            html += `<span>${escapeHtml(code.substring(blockPos, errStart))}</span>`;
           }
           let className = 'highlight-warning';
           if (err.type === 'Syntax') className = 'highlight-invalid';
@@ -252,7 +252,7 @@ function updateHighlights(code: string, parameter: string) {
           if (errIndex > -1) sortedErrors.splice(errIndex, 1);
         }
         if (end > blockPos) {
-          html += `<span class="highlight-valid">${escapeHtml(code.substring(blockPos, end))}</span>`;
+          html += `<span>${escapeHtml(code.substring(blockPos, end))}</span>`;
         }
       } else {
         // Valid block

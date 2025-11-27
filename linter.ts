@@ -422,7 +422,7 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
         } else if (parameter === 'default_value' || parameter === 'filters') {
           // In default_value and filters, field references are not allowed.
           // If we see a property access to a standard field property, it's invalid.
-          const fieldProperties = ['_value', '_rendered_value', '_linked_value', '_label', '_series', '_group_label', '_link', '_parameter_value', '_name', '_is_selected', '_in_query', '_is_filtered'];
+          const fieldProperties = ['_value', '_rendered_value', '_linked_value', '_label', '_series', '_group_label', '_link', '_parameter_value', '_name', '_is_selected', '_in_query', '_is_filtered', '_dashboard_url', '_explore', '_model', '_view', '_field', '_query'];
           if (fieldProperties.includes(varName)) {
             errors.push({
               type: 'Looker-specific',
