@@ -25,19 +25,19 @@ engine.registerTag('date_end', {
 });
 
 const supportMap: Record<string, string[]> = {
-  'html': ['value', 'row', 'rendered_value', 'filterable_value', 'link', 'linked_value', '_filters', '_user_attributes', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_parameter_value', 'parameter'],
-  'sql': ['link', 'date_start', 'date_end', 'condition', '_parameter_value', '_user_attributes', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', 'parameter'],
-  'link': ['value', 'row', 'rendered_value', 'filterable_value', 'link', 'linked_value', '_filters', '_user_attributes', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', '_parameter_value', 'parameter'],
+  'html': ['value', 'row', 'rendered_value', 'filterable_value', 'link', 'linked_value', '_filters', '_user_attributes', '_model', '_view', '_explore', '_dashboard_url', '_field', '_query', '_parameter_value', 'parameter'],
+  'sql': ['link', 'date_start', 'date_end', 'condition', '_parameter_value', '_user_attributes', '_model', '_view', '_explore', '_dashboard_url', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', 'parameter'],
+  'link': ['value', 'row', 'rendered_value', 'filterable_value', 'link', 'linked_value', '_filters', '_user_attributes', '_model', '_view', '_explore', '_dashboard_url', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', '_parameter_value', 'parameter'],
   'label': ['row', '_filters', '_user_attributes', '_model', '_view', '_explore', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', '_parameter_value', 'parameter'],
   'action': ['value', 'rendered_value', 'filterable_value', 'link', 'linked_value', '_filters', '_user_attributes', '_model', '_view', '_explore', '_field', '_query'],
   'filters': ['_user_attributes', '_localization'],
   'default_value': ['_user_attributes', '_localization'],
   'description': ['_filters', '_user_attributes', '_model', '_view', '_explore', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', '_parameter_value', 'parameter'],
-  'sql_preamble': ['_user_attributes', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', 'parameter']
+  'sql_preamble': ['_user_attributes', '_model', '_view', '_explore', '_dashboard_url', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', 'parameter']
 };
 
 const allowedFilters = [
-  'abs', 'append', 'at_least', 'at_most', 'capitalize', 'ceil', 'compact', 'concat', 'date', 'default', 'divided_by', 'downcase', 'escape', 'escape_once', 'first', 'floor', 'join', 'last', 'lstrip', 'map', 'minus', 'modulo', 'newline_to_br', 'plus', 'prepend', 'remove', 'remove_first', 'replace', 'replace_first', 'reverse', 'round', 'rstrip', 'size', 'slice', 'sort', 'sort_natural', 'split', 'strip', 'strip_html', 'strip_newlines', 'times', 'truncate', 'truncatewords', 'uniq', 'upcase', 'url_decode', 'url_encode', 'where', 'encode_uri'
+  'abs', 'append', 'at_least', 'at_most', 'capitalize', 'ceil', 'compact', 'concat', 'date', 'default', 'divided_by', 'downcase', 'escape', 'escape_once', 'first', 'floor', 'join', 'last', 'lstrip', 'map', 'minus', 'modulo', 'newline_to_br', 'plus', 'prepend', 'remove', 'remove_first', 'replace', 'replace_first', 'reverse', 'round', 'rstrip', 'size', 'slice', 'sort', 'sort_natural', 'split', 'strip', 'strip_html', 'strip_newlines', 'times', 'truncate', 'truncatewords', 'uniq', 'upcase', 'url_decode', 'url_encode', 'where', 'encode_uri', 'sql_boolean'
 ];
 
 export interface LintError {
@@ -411,7 +411,7 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
             url: 'https://cloud.google.com/looker/docs/liquid-variable-reference#accessing_variables_from_other_fields',
             range: [varStart, varEnd]
           });
-        } else if ((varName === '_parameter_value' || varName === '_is_selected' || varName === '_in_query' || varName === '_is_filtered' || (varName === '_dashboard_url' && parameter === 'action')) && !supported.includes(varName)) {
+        } else if ((varName === '_parameter_value' || varName === '_is_selected' || varName === '_in_query' || varName === '_is_filtered' || varName === '_dashboard_url') && !supported.includes(varName)) {
           errors.push({
             type: 'Looker-specific',
             message: `Variable \`${varName}\` is not supported in the \`${parameter}\` parameter.`,

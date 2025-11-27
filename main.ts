@@ -25,14 +25,13 @@ function handleLint() {
     const match = line.match(/^\s*([a-z_]+)\s*:/);
     if (match) {
       const param = match[1];
-      if (lookmlParams.includes(param) && (line.includes('{{') || line.includes('{%'))) {
+      if (lookmlParams.includes(param) && (line.includes('{{') || line.includes('{%') || (lines.slice(lines.indexOf(line)).some(l => l.includes('{{') || l.includes('{%'))))) {
+      // Check subsequent lines for liquid if not on same line
         detectedParameters.push(param);
       }
     }
   }
 
-  // If exactly one parameter is detected and it's different from current, update dropdown
-  // Only if user hasn't manually selected a parameter, or if the input is empty (reset)
   if (code.trim() === '') {
     manualParameterSelection = false;
   }
@@ -40,33 +39,30 @@ function handleLint() {
   if (!manualParameterSelection && detectedParameters.length === 1) {
     const detected = detectedParameters[0];
     let optionValue = detected;
-    // Handle grouped options
     if (['sql', 'sql_on', 'sql_table_name'].includes(detected)) optionValue = 'sql';
     if (['label', 'view_label', 'group_label'].includes(detected)) optionValue = 'label';
     if (detected === 'url') optionValue = 'link';
 
     if (parameterSelect.value !== optionValue && parameterSelect.value === 'auto') {
-      // We don't change the dropdown value anymore, just use the detected parameter for linting
-      // Wait, actually the requirement was to update the dropdown if it's in auto-mode?
-      // "If exactly one parameter is detected and it's different from current, update dropdown"
-      // But if we update the dropdown, it's no longer 'auto'.
-      // Let's keep it as 'auto' in the dropdown, but lint with the detected parameter.
-      // Actually, the user might want to see what was detected.
-      // If we change it from 'auto' to 'link', then manualParameterSelection becomes true? No, we didn't set it.
-      // Let's stick to the plan: if 'auto' is selected, we use detected. We don't necessarily need to change the dropdown, 
-      // but it's nice feedback.
-      // If we change it, next time it won't be 'auto'. That's probably not what we want if they paste another block.
-      // Better to keep it 'auto' and just lint correctly.
+      // Keep as auto but lint with detected
     }
-    if (parameterSelect.value === 'auto') {
-      parameter = 'auto'; // linter.ts handles 'auto' by using detectedParams
+  }
+
+  // Simple parameter detection for Auto-detect logic
+  const autoDetectParams = ['html', 'sql', 'sql_on', 'sql_table_name', 'link', 'label', 'view_label', 'group_label', 'action', 'filters', 'default_value', 'description', 'sql_preamble'];
+  const autoDetected: string[] = [];
+  for (const line of lines) {
+    const match = line.match(/^\s*([a-z_]+)\s*:\s*(.*)/);
+    if (match && autoDetectParams.includes(match[1])) {
+      autoDetected.push(match[1]);
     }
-  } else if (!manualParameterSelection && detectedParameters.length === 0 && parameterSelect.value === 'auto') {
-    // No parameters detected, default to 'action' and disable auto-detect option if desired, 
-    // but for now just fallback to 'action' for linting
+  }
+
+  if (parameterSelect.value === 'auto' && autoDetected.length > 0) {
+    parameter = 'auto'; // linter.ts handles 'auto' by using detectedParams
+  } else if (!manualParameterSelection && autoDetected.length === 0 && parameterSelect.value === 'auto') {
+    // No parameters detected, default to 'action' and disable auto-detect option
     parameter = 'action';
-    // Optionally update dropdown to 'action' but keep it enabled? 
-    // User wants Auto-detect greyed out.
     const autoOption = parameterSelect.querySelector('option[value="auto"]') as HTMLOptionElement;
     if (autoOption) {
       autoOption.disabled = true;
@@ -75,7 +71,7 @@ function handleLint() {
         parameter = 'action';
       }
     }
-  } else if (detectedParameters.length > 0) {
+  } else if (autoDetected.length > 0) {
     // Re-enable auto-detect if parameters are found
     const autoOption = parameterSelect.querySelector('option[value="auto"]') as HTMLOptionElement;
     if (autoOption) autoOption.disabled = false;
