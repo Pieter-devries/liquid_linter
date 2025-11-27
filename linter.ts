@@ -72,13 +72,14 @@ export function lintLiquid(code: string, parameter: string): LintResult {
 
   // Multi-parameter validation
   const lookmlParams = ['html', 'sql', 'sql_on', 'sql_table_name', 'link', 'label', 'view_label', 'group_label', 'action', 'filters', 'default_value', 'description', 'sql_preamble'];
-  const detectedParams: { param: string, content: string, lineOffset: number }[] = [];
+  const detectedParams: { param: string, content: string, lineOffset: number, charOffset: number }[] = [];
   let allErrors: LintError[] = [];
 
   const lines = code.split('\n');
   let currentParam: string | null = null;
   let currentContent: string[] = [];
   let currentLineOffset = 0;
+  let currentCharacterOffset = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -112,7 +113,7 @@ export function lintLiquid(code: string, parameter: string): LintResult {
       if (lookmlParams.includes(paramName)) {
         // If we were already tracking a parameter, save it
         if (currentParam) {
-          detectedParams.push({ param: currentParam, content: currentContent.join('\n'), lineOffset: currentLineOffset });
+          detectedParams.push({ param: currentParam, content: currentContent.join('\n'), lineOffset: currentLineOffset, charOffset: currentCharacterOffset });
         }
         // Start new parameter
         currentParam = paramName;
@@ -122,6 +123,18 @@ export function lintLiquid(code: string, parameter: string): LintResult {
 
         currentContent = [paramContent]; // Start with content after colon
         currentLineOffset = i;
+        // Calculate character offset for this parameter's content
+        // It's the sum of lengths of all previous lines plus newline characters
+        let charOffset = 0;
+        for (let j = 0; j < i; j++) {
+          charOffset += lines[j].length + 1; // +1 for newline
+        }
+        // Add indentation and parameter name length and colon and space
+        const paramStartMatch = line.match(/^(\s*[a-z_]+\s*:\s*)/);
+        if (paramStartMatch) {
+          charOffset += paramStartMatch[1].length;
+        }
+        currentCharacterOffset = charOffset;
       } else if (currentParam) {
         // If it's not a recognized top-level parameter but we are inside one, it might be part of the content (though usually it's nested LookML)
         // For now, continue adding to current content unless it looks like a new unrelated parameter
@@ -132,7 +145,7 @@ export function lintLiquid(code: string, parameter: string): LintResult {
       currentContent.push(line);
       // Check for end of parameter (simplified: look for ;; or next parameter which is handled by match above)
       if (line.includes(';;')) {
-        detectedParams.push({ param: currentParam, content: currentContent.join('\n'), lineOffset: currentLineOffset });
+        detectedParams.push({ param: currentParam, content: currentContent.join('\n'), lineOffset: currentLineOffset, charOffset: currentCharacterOffset });
         currentParam = null;
         currentContent = [];
       }
@@ -140,20 +153,21 @@ export function lintLiquid(code: string, parameter: string): LintResult {
   }
   // Catch last parameter if any
   if (currentParam) {
-    detectedParams.push({ param: currentParam, content: currentContent.join('\n'), lineOffset: currentLineOffset });
+    detectedParams.push({ param: currentParam, content: currentContent.join('\n'), lineOffset: currentLineOffset, charOffset: currentCharacterOffset });
   }
 
   if (parameter === 'auto' && detectedParams.length > 0) {
     // Multi-parameter mode
     let allErrors: LintError[] = [];
-    for (const { param, content, lineOffset } of detectedParams) {
+    for (const { param, content, lineOffset, charOffset } of detectedParams) {
       // Only lint if content contains Liquid
       if (content.includes('{{') || content.includes('{%')) {
         const result = lintLiquid(content, param);
-        // Adjust line numbers
+        // Adjust line numbers and ranges
         const adjustedErrors = result.errors.map(err => ({
           ...err,
-          line: typeof err.line === 'number' ? err.line + lineOffset : err.line
+          line: typeof err.line === 'number' ? err.line + lineOffset : err.line,
+          range: err.range ? [err.range[0] + charOffset, err.range[1] + charOffset] as [number, number] : undefined
         }));
         allErrors = allErrors.concat(adjustedErrors);
       }

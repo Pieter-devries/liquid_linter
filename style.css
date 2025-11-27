@@ -133,6 +133,12 @@ main {
   cursor: help;
 }
 
+.highlight-success {
+  border-bottom: 2px solid var(--success-color);
+  background-color: rgba(76, 175, 80, 0.1);
+  pointer-events: auto;
+  cursor: help;
+}
 #line-numbers {
   position: absolute;
   top: 0;

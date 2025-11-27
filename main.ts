@@ -218,7 +218,9 @@ function updateHighlights(code: string, parameter: string) {
           if (errStart > blockPos) {
             html += `<span class="highlight-valid">${escapeHtml(code.substring(blockPos, errStart))}</span>`;
           }
-          const className = err.type === 'Syntax' ? 'highlight-invalid' : 'highlight-warning';
+          let className = 'highlight-warning';
+          if (err.type === 'Syntax') className = 'highlight-invalid';
+          if (err.type === 'Success') className = 'highlight-success';
           html += `<span class="${className}" title="${escapeHtml(err.message)}">${escapeHtml(code.substring(errStart, errEnd))}</span>`;
           blockPos = errEnd;
           // Remove from sortedErrors
