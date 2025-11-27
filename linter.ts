@@ -24,7 +24,7 @@ engine.registerTag('date_end', {
   render: function (ctx, hash) { return `[date_end: ${this.args}]`; }
 });
 
-const supportMap = {
+const supportMap: Record<string, string[]> = {
   'html': ['value', 'rendered_value', 'filterable_value', 'link', 'linked_value', '_filters', '_user_attributes', '_localization', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_parameter_value'],
   'sql': ['link', 'date_start', 'date_end', 'condition', '_parameter_value', '_user_attributes', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_in_query', '_is_selected', '_is_filtered'],
   'link': ['value', 'rendered_value', 'filterable_value', 'link', 'linked_value', '_filters', '_user_attributes', '_model', '_view', '_explore', '_explore._dashboard_url', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', '_parameter_value'],
@@ -35,7 +35,19 @@ const supportMap = {
   'description': ['_filters', '_user_attributes', '_model', '_view', '_explore', '_field', '_query', '_in_query', '_is_selected', '_is_filtered', '_parameter_value']
 };
 
-export function lintLiquid(code, parameter) {
+export interface LintError {
+  type: string;
+  message: string;
+  line: number | string;
+  url?: string;
+}
+
+export interface LintResult {
+  status: 'ready' | 'success' | 'warning' | 'error';
+  errors: LintError[];
+}
+
+export function lintLiquid(code: string, parameter: string): LintResult {
   if (!code || !code.trim()) {
     return { status: 'ready', errors: [] };
   }
@@ -48,37 +60,57 @@ export function lintLiquid(code, parameter) {
     } else {
       return { status: 'success', errors: [] };
     }
-  } catch (err) {
+  } catch (err: any) {
     return { status: 'error', errors: [formatError(err)] };
   }
 }
 
-function runCustomChecks(code, parameter) {
-  const errors = [];
+function runCustomChecks(code: string, parameter: string): LintError[] {
+  const errors: LintError[] = [];
 
   // Single equals
   const singleEqualsRegex = /{%-?\s*(?:if|elsif)\s+[^%]*?[^=!<>]=\s*[^%=!<>]+?\s*-?%}/g;
   let match;
   while ((match = singleEqualsRegex.exec(code)) !== null) {
-    errors.push({ type: 'Looker-specific', message: 'Use double equals `==` for comparison, not single equals `=`', line: getLineNumber(code, match.index) });
+    errors.push({
+      type: 'Looker-specific',
+      message: 'Use double equals `==` for comparison, not single equals `=`',
+      line: getLineNumber(code, match.index),
+      url: 'https://cloud.google.com/looker/docs/liquid-variable-reference#using_liquid_in_lookml'
+    });
   }
 
   // Nested tags
   const nestedTagsRegex = /{%-?\s*[^%]*?{{[^%]*?}}-?\s*[^%]*?-?%}/g;
   while ((match = nestedTagsRegex.exec(code)) !== null) {
-    errors.push({ type: 'Looker-specific', message: 'Do not nest Liquid tags. Use variables directly within tags.', line: getLineNumber(code, match.index) });
+    errors.push({
+      type: 'Looker-specific',
+      message: 'Do not nest Liquid tags. Use variables directly within tags.',
+      line: getLineNumber(code, match.index),
+      url: 'https://cloud.google.com/looker/docs/liquid-variable-reference#nested_tags'
+    });
   }
 
   // Incorrect tag syntax
   const incorrectTagRegex = /{{\s*(?:if|elsif|else|endif|for|endfor|case|when|endcase|assign|capture|endcapture|increment|decrement|cycle|tablerow|endtablerow|include|layout|paginate|endpaginate|raw|endraw|comment|endcomment|unless|endunless)\s+[^}]*?}}/g;
   while ((match = incorrectTagRegex.exec(code)) !== null) {
-    errors.push({ type: 'Looker-specific', message: 'Use tag syntax `{% ... %}` for control flow, not output syntax `{{ ... }}`', line: getLineNumber(code, match.index) });
+    errors.push({
+      type: 'Looker-specific',
+      message: 'Use tag syntax `{% ... %}` for control flow, not output syntax `{{ ... }}`',
+      line: getLineNumber(code, match.index),
+      url: 'https://shopify.github.io/liquid/tags/control-flow/'
+    });
   }
 
   // Yes/No capitalization
   const yesNoRegex = /{%-?\s*(?:if|elsif)\s+[^%]*?==\s*["'](?:yes|no)["']\s*-?%}/g;
   while ((match = yesNoRegex.exec(code)) !== null) {
-    errors.push({ type: 'Looker-specific', message: 'Capitalize "Yes" and "No" when comparing with yesno fields.', line: getLineNumber(code, match.index) });
+    errors.push({
+      type: 'Looker-specific',
+      message: 'Capitalize "Yes" and "No" when comparing with yesno fields.',
+      line: getLineNumber(code, match.index),
+      url: 'https://cloud.google.com/looker/docs/liquid-variable-reference#using_liquid_with_yesno_fields'
+    });
   }
 
   // Parameter validation
@@ -100,16 +132,21 @@ function runCustomChecks(code, parameter) {
       else if (varName === '_renderedvalue') suggestion = 'Did you mean `_rendered_value`?';
       else if (varName === '_linkedvalue') suggestion = 'Did you mean `_linked_value`?';
 
-      errors.push({ type: 'Looker-specific', message: `Potentially incorrect Looker variable: \`${varName}\`. ${suggestion}`, line: getLineNumber(code, match.index) });
+      errors.push({
+        type: 'Looker-specific',
+        message: `Potentially incorrect Looker variable: \`${varName}\`. ${suggestion}`,
+        line: getLineNumber(code, match.index),
+        url: 'https://cloud.google.com/looker/docs/liquid-variable-reference'
+      });
     }
   }
 
   return errors;
 }
 
-function validateParameterUsage(code, parameter, errors) {
+function validateParameterUsage(code: string, parameter: string, errors: LintError[]): void {
   const supported = supportMap[parameter] || [];
-  if (!supported.length && parameter) return; // If parameter is unknown, skip validation
+  if (!supported.length && parameter) return;
 
   const variableRegex = /({{|{%)[^%}]*?(\.\s*|\s+)(_[a-zA-Z0-9_]+)/g;
   let match;
@@ -118,7 +155,12 @@ function validateParameterUsage(code, parameter, errors) {
     if (varName.startsWith('_') && !supported.includes(varName)) {
       if (varName === '_filters' || varName === '_user_attributes' || varName === '_localization') continue;
       if (!supported.includes(varName)) {
-        errors.push({ type: 'Looker-specific', message: `Variable \`${varName}\` is not supported in the \`${parameter}\` parameter.`, line: getLineNumber(code, match.index) });
+        errors.push({
+          type: 'Looker-specific',
+          message: `Variable \`${varName}\` is not supported in the \`${parameter}\` parameter.`,
+          line: getLineNumber(code, match.index),
+          url: 'https://cloud.google.com/looker/docs/liquid-variable-reference'
+        });
       }
     }
   }
@@ -129,25 +171,35 @@ function validateParameterUsage(code, parameter, errors) {
     let varMatch;
     while ((varMatch = regex.exec(code)) !== null) {
       if (!supported.includes(varName)) {
-        errors.push({ type: 'Looker-specific', message: `Variable \`${varName}\` is not supported in the \`${parameter}\` parameter.`, line: getLineNumber(code, varMatch.index) });
+        errors.push({
+          type: 'Looker-specific',
+          message: `Variable \`${varName}\` is not supported in the \`${parameter}\` parameter.`,
+          line: getLineNumber(code, varMatch.index),
+          url: 'https://cloud.google.com/looker/docs/liquid-variable-reference'
+        });
       }
     }
   });
 }
 
-function getLineNumber(code, index) {
+function getLineNumber(code: string, index: number): number {
   return code.substring(0, index).split('\n').length;
 }
 
-function formatError(err) {
+function formatError(err: any): LintError {
   let message = err.message;
   let line = err.line || 'unknown';
+  let url = 'https://shopify.github.io/liquid/';
+
   if (message.includes('not closed')) {
     const tagMatch = message.match(/tag (.*) not closed/);
     if (tagMatch) {
       const tagName = tagMatch[1].split(/\s+/)[1];
       message = `Tag \`${tagName}\` is not closed. Did you forget \`{% end${tagName} %}\`?`;
+      url = 'https://shopify.github.io/liquid/tags/control-flow/';
     }
+  } else if (message.includes('invalid value expression')) {
+    url = 'https://shopify.github.io/liquid/tags/control-flow/#elsif';
   }
-  return { type: 'Syntax', message, line };
+  return { type: 'Syntax', message, line, url };
 }

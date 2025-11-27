@@ -1,10 +1,10 @@
-import { lintLiquid } from './linter.js';
+import { lintLiquid, LintError } from './linter';
 
-const input = document.getElementById('liquid-input');
-const parameterSelect = document.getElementById('lookml-parameter');
-const statusIcon = document.getElementById('status-icon');
-const statusMessage = document.getElementById('status-message');
-const errorList = document.getElementById('error-list');
+const input = document.getElementById('liquid-input') as HTMLTextAreaElement;
+const parameterSelect = document.getElementById('lookml-parameter') as HTMLSelectElement;
+const statusIcon = document.getElementById('status-icon') as HTMLSpanElement;
+const statusMessage = document.getElementById('status-message') as HTMLSpanElement;
+const errorList = document.getElementById('error-list') as HTMLDivElement;
 
 function handleLint() {
   const code = input.value;
@@ -36,7 +36,7 @@ function setSuccess() {
   errorList.innerHTML = '';
 }
 
-function setWarning(errors) {
+function setWarning(errors: LintError[]) {
   statusIcon.className = 'warning';
   statusIcon.style.backgroundColor = '#ff9800';
   statusMessage.textContent = 'Looker-specific Issues';
@@ -45,11 +45,12 @@ function setWarning(errors) {
     <div class="error-item warning">
       <div class="error-line">Line ${err.line} (${err.type})</div>
       <div class="error-message">${err.message}</div>
+      ${err.url ? `<div class="error-doc"><a href="${err.url}" target="_blank">View Documentation</a></div>` : ''}
     </div>
   `).join('');
 }
 
-function setError(err) {
+function setError(err: LintError) {
   statusIcon.className = 'error';
   statusIcon.style.backgroundColor = ''; // use CSS
   statusMessage.textContent = 'Syntax Error';
@@ -58,13 +59,14 @@ function setError(err) {
     <div class="error-item">
       <div class="error-line">Line ${err.line} (${err.type})</div>
       <div class="error-message">${err.message}</div>
+      ${err.url ? `<div class="error-doc"><a href="${err.url}" target="_blank">View Documentation</a></div>` : ''}
     </div>
   `;
 }
 
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
+function debounce(func: Function, wait: number) {
+  let timeout: number | undefined;
+  return function executedFunction(...args: any[]) {
     const later = () => {
       clearTimeout(timeout);
       func(...args);
