@@ -68,11 +68,11 @@ function handleLint() {
   if (result.status === 'ready') {
     setReady();
   } else if (result.status === 'success') {
-    setSuccess();
+    setSuccess(result.errors);
   } else if (result.status === 'warning') {
     setWarning(result.errors);
   } else if (result.status === 'error') {
-    setError(result.errors[0]);
+    setError(result.errors[0], result.errors.slice(1));
   }
 }
 
@@ -83,39 +83,45 @@ function setReady() {
   errorList.innerHTML = '';
 }
 
-function setSuccess() {
+function setSuccess(messages: LintError[] = []) {
   statusIcon.className = 'success';
   statusIcon.style.backgroundColor = ''; // use CSS
   statusMessage.textContent = 'Valid Liquid';
-  errorList.innerHTML = '';
+  renderMessages(messages);
 }
 
 function setWarning(errors: LintError[]) {
   statusIcon.className = 'warning';
   statusIcon.style.backgroundColor = '#ff9800';
   statusMessage.textContent = 'Looker-specific Issues';
-
-  errorList.innerHTML = errors.map(err => `
-    <div class="error-item warning">
-      <div class="error-line">Line ${err.line} (${err.type})</div>
-      <div class="error-message">${err.message}</div>
-      ${err.url ? `<div class="error-doc"><a href="${err.url}" target="_blank">View Documentation</a></div>` : ''}
-    </div>
-  `).join('');
+  renderMessages(errors);
 }
 
-function setError(err: LintError) {
+function setError(err: LintError, otherMessages: LintError[] = []) {
   statusIcon.className = 'error';
   statusIcon.style.backgroundColor = ''; // use CSS
   statusMessage.textContent = 'Syntax Error';
+  renderMessages([err, ...otherMessages]);
+}
 
-  errorList.innerHTML = `
-    <div class="error-item">
-      <div class="error-line">Line ${err.line} (${err.type})</div>
-      <div class="error-message">${err.message}</div>
-      ${err.url ? `<div class="error-doc"><a href="${err.url}" target="_blank">View Documentation</a></div>` : ''}
-    </div>
-  `;
+function renderMessages(messages: LintError[]) {
+  errorList.innerHTML = messages.map(msg => {
+    const isSuccess = msg.type === 'Success';
+    const isWarning = msg.type === 'Looker-specific';
+    const isError = msg.type === 'Syntax';
+
+    let className = 'error-item';
+    if (isSuccess) className += ' success';
+    if (isWarning) className += ' warning';
+
+    return `
+      <div class="${className}">
+        <div class="error-line">Line ${msg.line} (${msg.type})</div>
+        <div class="error-message">${msg.message}</div>
+        ${msg.url ? `<div class="error-doc"><a href="${msg.url}" target="_blank">View Documentation</a></div>` : ''}
+      </div>
+    `;
+  }).join('');
 }
 
 function debounce(func: Function, wait: number) {

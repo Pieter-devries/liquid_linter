@@ -162,7 +162,11 @@ export function lintLiquid(code: string, parameter: string): LintResult {
     // but usually they are within the same SQL block. For now, we rely on individual linting.
 
     if (allErrors.length > 0) {
-      return { status: 'warning', errors: allErrors };
+      const hasRealErrors = allErrors.some(e => e.type !== 'Success');
+      if (hasRealErrors) {
+        return { status: 'warning', errors: allErrors };
+      }
+      return { status: 'success', errors: allErrors };
     }
     return { status: 'success', errors: [] };
   } else if (parameter === 'auto' && detectedParams.length === 0) {
@@ -180,7 +184,11 @@ export function lintLiquid(code: string, parameter: string): LintResult {
   try {
     engine.parse(preProcessedCode);
     if (customErrors.length > 0) {
-      return { status: 'warning', errors: customErrors };
+      const hasRealErrors = customErrors.some(e => e.type !== 'Success');
+      if (hasRealErrors) {
+        return { status: 'warning', errors: customErrors };
+      }
+      return { status: 'success', errors: customErrors };
     }
     return { status: 'success', errors: [] };
   } catch (err: any) {
@@ -420,11 +428,27 @@ function validateParameterUsage(code: string, parameter: string, errors: LintErr
             url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
             range: [validMatch.index, validMatch.index + validMatch[0].length]
           });
+        } else if (varName.startsWith('_') && supported.includes(varName)) {
+          errors.push({
+            type: 'Success',
+            message: `Variable \`${varName}\` is acceptable to use in the \`${parameter}\` parameter.`,
+            line: getLineNumber(code, validMatch.index),
+            url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
+            range: [validMatch.index, validMatch.index + validMatch[0].length]
+          });
         } else if (!varName.startsWith('_') && !supported.includes(varName)) {
           // For standard variables like 'value', 'link', etc.
           errors.push({
             type: 'Looker-specific',
             message: `Variable \`${varName}\` is not supported in the \`${parameter}\` parameter.`,
+            line: getLineNumber(code, validMatch.index),
+            url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
+            range: [validMatch.index, validMatch.index + validMatch[0].length]
+          });
+        } else if (!varName.startsWith('_') && supported.includes(varName)) {
+          errors.push({
+            type: 'Success',
+            message: `Variable \`${varName}\` is acceptable to use in the \`${parameter}\` parameter.`,
             line: getLineNumber(code, validMatch.index),
             url: 'https://cloud.google.com/looker/docs/liquid-variable-reference',
             range: [validMatch.index, validMatch.index + validMatch[0].length]
