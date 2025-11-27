@@ -198,7 +198,9 @@ function updateHighlights(code: string, parameter: string) {
       const [start, end] = nextError!.range!;
       html += escapeHtml(code.substring(currentPos, start));
       const errorText = code.substring(start, end);
-      const className = nextError!.type === 'Syntax' ? 'highlight-invalid' : 'highlight-warning';
+      let className = 'highlight-warning';
+      if (nextError!.type === 'Syntax') className = 'highlight-invalid';
+      if (nextError!.type === 'Success') className = 'highlight-success';
       html += `<span class="${className}" title="${escapeHtml(nextError!.message)}">${escapeHtml(errorText)}</span>`;
       currentPos = end;
       // Remove handled error
